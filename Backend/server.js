@@ -3,16 +3,16 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-const studentRoutes = require("./routes/studentRoutes");
-const courseRoutes = require("./routes/courseRoutes");
+
+
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/students", studentRoutes);
-app.use("/api/courses", courseRoutes);
+
+
 
 app.get("/", (req, res) => {
   res.send("EduManager API running");
@@ -24,62 +24,15 @@ mongoose.connect(process.env.MONGODB_URI)
 
 
 // Configure Winston Logger
-const logger = winston.createLogger({
-  level: "info",
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: "error.log", level: "error" }),
-    new winston.transports.File({ filename: "combined.log" }),
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      ),
-    }),
-  ],
-});
 
-app.use(
-  morgan(":method :url :status :response-time ms - :res[content-length]")
-);
+
+
 
 // Custom API Logger Middleware
-const apiLogger = (req, res, next) => {
-  const start = Date.now();
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    logger.info({
-      method: req.method,
-      path: req.path,
-      status: res.statusCode,
-      duration: `${duration}ms`,
-      params: req.params,
-      query: req.query,
-      body: req.method !== "GET" ? req.body : undefined,
-    });
-  });
-  next();
-};
 
-app.use(apiLogger);
 
 // Error Handling Middleware
-app.use((err, req, res, next) => {
-  logger.error({
-    message: err.message,
-    stack: err.stack,
-    method: req.method,
-    path: req.path,
-    params: req.params,
-    query: req.query,
-    body: req.method !== "GET" ? req.body : undefined,
-  });
 
-  res.status(500).json({ message: "Internal server error" });
-});
 
 const studentSchema = new mongoose.Schema(
   {
@@ -145,10 +98,10 @@ const Course  = mongoose.model("Course", courseSchema);
 app.get('/api/courses', async (req, res) =>{
        try {
          const courses = await Course.find().sort({ name: 1 });
-         logger.info(`Retrieved ${courses.length} courses successfully`);
+         
          res.json(courses);
        } catch (error) {
-         logger.error("Error fetching courses:", error);
+         
          res.status(500).json({ message: error.message });
        }
 })
@@ -181,16 +134,13 @@ app.put("/api/courses/:id", async (req, res) => {
       new: true,
     });
     if (!course) {
-      logger.warn("Course not found for update:", { courseId: req.params.id });
+      
       return res.status(404).json({ message: "Course not found" });
     }
-    logger.info("Course updated successfully:", {
-      courseId: course._id,
-      name: course.name,
-    });
+    
     res.json(course);
   } catch (error) {
-    logger.error("Error updating course:", error);
+    
     res.status(400).json({ message: error.message });
   }
 });
@@ -201,10 +151,7 @@ app.delete("/api/courses/:id", async (req, res) => {
       course: req.params.id,
     });
     if (enrolledStudents > 0) {
-      logger.warn("Attempted to delete course with enrolled students:", {
-        courseId: req.params.id,
-        enrolledStudents,
-      });
+      
       return res
         .status(400)
         .json({ message: "Cannot delete course with enrolled students" });
@@ -212,18 +159,13 @@ app.delete("/api/courses/:id", async (req, res) => {
 
     const course = await Course.findByIdAndDelete(req.params.id);
     if (!course) {
-      logger.warn("Course not found for deletion:", {
-        courseId: req.params.id,
-      });
+      
       return res.status(404).json({ message: "Course not found" });
     }
-    logger.info("Course deleted successfully:", {
-      courseId: course._id,
-      name: course.name,
-    });
+    
     res.json({ message: "Course deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting course:", error);
+    
     res.status(500).json({ message: error.message });
   }
 });
@@ -236,7 +178,7 @@ app.get("/api/courses/:id", async (req, res) => {
     }
     res.json(course);
   } catch (error) {
-    logger.error("Error fetching course:", error);
+    
     res.status(500).json({ message: error.message });
   }
 });
@@ -245,10 +187,10 @@ app.get("/api/courses/:id", async (req, res) => {
 app.get("/api/students", async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
-    logger.info(`Retrieved ${students.length} students successfully`);
+    
     res.json(students);
   } catch (error) {
-    logger.error("Error fetching students:", error);
+    
     res.status(500).json({ message: error.message });
   }
 });
@@ -257,14 +199,10 @@ app.post("/api/students", async (req, res) => {
   try {
     const student = new Student(req.body);
     const savedStudent = await student.save();
-    logger.info("New student created:", {
-      studentId: savedStudent._id,
-      name: savedStudent.name,
-      course: savedStudent.course,
-    });
+
     res.status(201).json(savedStudent);
   } catch (error) {
-    logger.error("Error creating student:", error);
+  
     res.status(400).json({ message: error.message });
   }
 });
@@ -275,19 +213,13 @@ app.put("/api/students/:id", async (req, res) => {
       new: true,
     });
     if (!student) {
-      logger.warn("Student not found for update:", {
-        studentId: req.params.id,
-      });
+      
       return res.status(404).json({ message: "Student not found" });
     }
-    logger.info("Student updated successfully:", {
-      studentId: student._id,
-      name: student.name,
-      course: student.course,
-    });
+    
     res.json(student);
   } catch (error) {
-    logger.error("Error updating student:", error);
+    
     res.status(400).json({ message: error.message });
   }
 });
@@ -296,19 +228,13 @@ app.delete("/api/students/:id", async (req, res) => {
   try {
     const student = await Student.findByIdAndDelete(req.params.id);
     if (!student) {
-      logger.warn("Student not found for deletion:", {
-        studentId: req.params.id,
-      });
+      
       return res.status(404).json({ message: "Student not found" });
     }
-    logger.info("Student deleted successfully:", {
-      studentId: student._id,
-      name: student.name,
-      course: student.course,
-    });
+    
     res.json({ message: "Student deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting student:", error);
+  
     res.status(500).json({ message: error.message });
   }
 });
@@ -316,7 +242,7 @@ app.delete("/api/students/:id", async (req, res) => {
 app.get("/api/students/search", async (req, res) => {
   try {
     const searchTerm = req.query.q;
-    logger.info("Student search initiated:", { searchTerm });
+    
 
     const students = await Student.find({
       $or: [
@@ -326,13 +252,10 @@ app.get("/api/students/search", async (req, res) => {
       ],
     });
 
-    logger.info("Student search completed:", {
-      searchTerm,
-      resultsCount: students.length,
-    });
+    
     res.json(students);
   } catch (error) {
-    logger.error("Error searching students:", error);
+    
     res.status(500).json({ message: error.message });
   }
 });
@@ -341,10 +264,10 @@ app.get("/api/students/search", async (req, res) => {
 app.get('/api/dashboard/stats', async (req, res) => {
     try {
         const stats = await getDashboardStats();
-        logger.info('Dashboard statistics retrieved successfully:', stats);
+        
         res.json(stats);
     } catch (error) {
-        logger.error('Error fetching dashboard stats:', error);
+        
         res.status(500).json({ message: error.message });
     }
 });
@@ -435,7 +358,7 @@ app.get('/api/students/:id', async (req, res) => {
         }
         res.json(student);
     } catch (error) {
-        logger.error('Error fetching student:', error);
+        
         res.status(500).json({ message: error.message });
     }
 });
