@@ -2,22 +2,29 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
-const morgan = require("morgan");
-const winston = require("winston");
+
+const studentRoutes = require("./routes/studentRoutes");
+const courseRoutes = require("./routes/courseRoutes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
-mongoose
-  .connect(
-    process.env.MONGODB_URI || "mongodb://localhost:27017/student-management-app",
-    
-  )
+app.use("/api/students", studentRoutes);
+app.use("/api/courses", courseRoutes);
+
+app.get("/", (req, res) => {
+  res.send("EduManager API running");
+});
+
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .catch(err => console.error(err));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server running on port", PORT));
+
 
 // Configure Winston Logger
 const logger = winston.createLogger({
