@@ -1,4 +1,7 @@
+console.log("Loading admin routes...");
 const adminRoutes = require("./routes/adminRoutes");
+console.log("Admin routes loaded");
+
 
 const express = require("express");
 const mongoose = require("mongoose");
